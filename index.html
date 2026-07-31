@@ -20,6 +20,7 @@
     --blue: #7BAFE9;
     --green: #3FA266;
     --link: #87c3ff;
+    --accent: #599CE7;
   }
   * { box-sizing: border-box; margin: 0; }
   body {
@@ -51,34 +52,97 @@
   table td { padding: 8px 12px; border-bottom: 1px solid var(--stroke); }
   table tr:last-child td { border-bottom: none; }
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
-  details { border: 1px solid var(--stroke); border-radius: 10px; background: var(--surface); margin-bottom: 8px; }
-  details summary { padding: 10px 14px; cursor: pointer; font-size: 13.5px; list-style: none; display: flex; align-items: center; gap: 8px; }
-  details summary::-webkit-details-marker { display: none; }
-  details .body { padding: 0 14px 12px; font-size: 13px; color: var(--text-2); }
-  details .body a { color: var(--link); text-decoration: none; display: block; margin-top: 6px; }
+  details.entry { border: 1px solid var(--stroke); border-radius: 10px; background: var(--surface); margin-bottom: 8px; }
+  details.entry summary { padding: 10px 14px; cursor: pointer; font-size: 13.5px; list-style: none; display: flex; align-items: center; gap: 8px; }
+  details.entry summary::-webkit-details-marker { display: none; }
+  details.entry .body { padding: 0 14px 12px; font-size: 13px; color: var(--text-2); }
+  details.entry .body a { color: var(--link); text-decoration: none; display: block; margin-top: 6px; }
   .feel-tag { margin-left: auto; font-size: 12px; font-weight: 600; }
   .howto { border: 1px solid var(--stroke); border-radius: 10px; padding: 14px; font-size: 13px; color: var(--text-2); }
   .howto ol { padding-left: 20px; margin-top: 6px; }
   .howto li { margin-bottom: 4px; }
   .toolbar { display: flex; gap: 8px; margin-top: 16px; }
-  .btn { flex: 1; text-align: center; background: var(--fill); border: 1px solid var(--stroke); border-radius: 8px; padding: 8px 0; font-size: 13px; color: var(--text); text-decoration: none; }
+  .btn { flex: 1; text-align: center; background: var(--fill); border: 1px solid var(--stroke); border-radius: 8px; padding: 8px 0; font-size: 13px; color: var(--text); text-decoration: none; cursor: pointer; font-family: inherit; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #14171c; font-weight: 600; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
   #status { font-size: 12px; color: var(--text-3); margin-top: 20px; text-align: center; }
+
+  /* ── 新增紀錄表單 ── */
+  #add-form { border: 1px solid var(--stroke); border-radius: 10px; background: var(--surface); padding: 14px; margin-top: 8px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; color: var(--text-3); margin-bottom: 5px; }
+  input, select, textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--stroke); border-radius: 8px;
+    color: var(--text); font-family: inherit; font-size: 14px; padding: 8px 10px; outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 56px; }
+  .feel-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .feel-pill { flex: 1; min-width: 60px; text-align: center; font-size: 12px; padding: 7px 2px; border: 1px solid var(--stroke); border-radius: 999px; background: var(--fill); color: var(--text-2); cursor: pointer; font-family: inherit; }
+  .feel-pill.on { color: #14171c; font-weight: 700; }
+  .song-row { border: 1px solid var(--stroke); border-radius: 8px; padding: 10px; margin-bottom: 8px; background: var(--bg); }
+  .song-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+  .song-head { display: flex; align-items: center; gap: 8px; }
+  .song-head input { flex: 1; }
+  .del-song { background: none; border: none; color: var(--red); font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; }
+  #preview { background: var(--bg); border: 1px dashed var(--stroke); border-radius: 8px; padding: 12px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; color: var(--text-2); margin-top: 12px; }
+  .confirm-row { display: flex; align-items: center; gap: 8px; margin: 12px 0; font-size: 13.5px; }
+  .confirm-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); }
+  .token-row { font-size: 12px; color: var(--text-3); margin-top: 10px; }
+  .token-row a { color: var(--link); text-decoration: none; }
+  #sync-msg { font-size: 13px; margin-top: 10px; }
+  #sync-msg.ok { color: var(--green); }
+  #sync-msg.err { color: var(--red); }
 </style>
 </head>
 <body>
 <h1>太鼓の達人 手感紀錄表</h1>
-<p class="caption">資料來源:GitHub · <span id="repo-name">Minoru1017/taiko-touch-record</span> · TAIKO_FEEL_LOG.md</p>
+<p class="caption">資料來源:GitHub · Minoru1017/taiko-touch-record · TAIKO_FEEL_LOG.md</p>
 
 <div id="app"></div>
 
-<h2>手機記錄流程</h2>
+<h2>新增紀錄</h2>
+<div id="add-form">
+  <div class="field">
+    <label>日期</label>
+    <input type="date" id="f-date">
+  </div>
+  <div class="field">
+    <label>手感自評</label>
+    <div class="feel-pills" id="f-feel"></div>
+  </div>
+  <div class="field">
+    <label>備註(身體狀況、心情等,可留空)</label>
+    <textarea id="f-note" placeholder="例:狀態不錯,連打穩定"></textarea>
+  </div>
+  <div class="field">
+    <label>歌曲</label>
+    <div id="song-list"></div>
+    <button class="btn" type="button" id="add-song" style="width:100%">+ 新增歌曲</button>
+  </div>
+  <div id="preview" hidden></div>
+  <div class="confirm-row" id="confirm-row" hidden>
+    <input type="checkbox" id="f-confirm">
+    <label for="f-confirm" style="margin:0;font-size:13.5px;color:var(--text)">我已確認內容無誤,同步到 GitHub</label>
+  </div>
+  <div class="toolbar" style="margin-top:12px">
+    <button class="btn" type="button" id="btn-preview">產生預覽</button>
+    <button class="btn primary" type="button" id="btn-sync" disabled>同步到 GitHub</button>
+  </div>
+  <div class="toolbar">
+    <button class="btn" type="button" id="btn-copy" disabled>複製紀錄內容</button>
+    <a class="btn" id="edit-link" target="_blank" rel="noopener">改用 GitHub 網頁編輯</a>
+  </div>
+  <div id="sync-msg"></div>
+  <div class="token-row" id="token-row"></div>
+</div>
+
+<h2>使用說明</h2>
 <div class="howto">
-  在 Cursor 手機版對這個 repo 開啟 agent 對話:
+  兩種記錄方式:
   <ol>
-    <li>說「記錄今天的手感」,並描述自評、備註與歌曲。</li>
-    <li>Agent 會先列出<b>草稿</b>供你確認,不會直接寫入。</li>
-    <li>確認無誤後回覆「<b>確認同步</b>」,agent 才會寫入日誌並 commit + push 到 GitHub。</li>
-    <li>回到本頁下拉重新整理,即可看到最新紀錄。</li>
+    <li><b>本頁表單</b>:填寫後按「產生預覽」→ 勾選確認 → 「同步到 GitHub」直接寫入日誌(需先設定一次 GitHub Token)。沒有 token 時,可「複製紀錄內容」再用 GitHub 網頁編輯貼上,或貼給 Cursor agent。</li>
+    <li><b>Cursor 手機版 agent</b>:對這個 repo 說「記錄今天的手感」,agent 會先列草稿,回覆「確認同步」後才寫入並 push。</li>
   </ol>
 </div>
 
@@ -93,10 +157,16 @@ const REPO = "Minoru1017/taiko-touch-record";
 const BRANCH = "main";
 const FILE = "TAIKO_FEEL_LOG.md";
 const RAW_URL = `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${FILE}`;
+const API_URL = `https://api.github.com/repos/${REPO}/contents/${FILE}`;
 document.getElementById("gh-link").href = `https://github.com/${REPO}/blob/${BRANCH}/${FILE}`;
+document.getElementById("edit-link").href = `https://github.com/${REPO}/edit/${BRANCH}/${FILE}`;
 
 const FEEL_LEVELS = ["很有差距", "略差", "表現相當", "略好", "非常的好"];
 const FEEL_COLOR = { "很有差距": "var(--red)", "略差": "var(--orange)", "表現相當": "var(--gray)", "略好": "var(--blue)", "非常的好": "var(--green)" };
+const DIFFICULTIES = ["簡單", "普通", "困難", "鬼(表)", "鬼(裏)"];
+const COMFORTS = ["順手", "普通", "不順手"];
+
+// ── 檢視:解析與渲染 ─────────────────────────────────────────────
 
 function parseLog(md) {
   const entries = [];
@@ -167,7 +237,7 @@ function render({ entries, danHistory }) {
   if (entries.length) {
     html += `<h2>每日紀錄</h2>`;
     html += entries.slice().reverse().map(e => `
-      <details>
+      <details class="entry">
         <summary>${feelDot(e.feel)}${esc(e.date)}<span class="feel-tag" style="color:${FEEL_COLOR[e.feel] || "var(--gray)"}">${esc(e.feel)}</span></summary>
         <div class="body">
           ${e.note ? `<div>${esc(e.note)}</div>` : ""}
@@ -186,15 +256,220 @@ function render({ entries, danHistory }) {
   app.innerHTML = html;
 }
 
-fetch(RAW_URL, { cache: "no-store" })
-  .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
-  .then(md => {
-    render(parseLog(md));
-    document.getElementById("status").textContent = `已更新 · ${new Date().toLocaleString("zh-TW", { hour12: false })}`;
-  })
-  .catch(err => {
-    document.getElementById("status").textContent = `載入失敗:${err.message}(repo 若為 private,raw 檔案無法公開讀取)`;
-  });
+function loadAndRender() {
+  return fetch(RAW_URL, { cache: "no-store" })
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
+    .then(md => {
+      render(parseLog(md));
+      document.getElementById("status").textContent = `已更新 · ${new Date().toLocaleString("zh-TW", { hour12: false })}`;
+    })
+    .catch(err => {
+      document.getElementById("status").textContent = `載入失敗:${err.message}`;
+    });
+}
+loadAndRender();
+
+// ── 新增紀錄表單 ─────────────────────────────────────────────────
+
+let selectedFeel = "";
+let previewBlock = "";
+
+document.getElementById("f-date").value = new Date().toLocaleDateString("sv-SE");
+
+const feelWrap = document.getElementById("f-feel");
+FEEL_LEVELS.forEach(level => {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "feel-pill";
+  b.textContent = level;
+  b.onclick = () => {
+    selectedFeel = level;
+    feelWrap.querySelectorAll(".feel-pill").forEach(x => { x.classList.remove("on"); x.style.background = ""; });
+    b.classList.add("on");
+    b.style.background = FEEL_COLOR[level];
+    invalidatePreview();
+  };
+  feelWrap.appendChild(b);
+});
+
+function songRow() {
+  const div = document.createElement("div");
+  div.className = "song-row";
+  div.innerHTML = `
+    <div class="song-head">
+      <input type="text" class="s-name" placeholder="歌名">
+      <button type="button" class="del-song" title="移除">×</button>
+    </div>
+    <div class="song-grid">
+      <select class="s-diff">${DIFFICULTIES.map(d => `<option${d === "鬼(表)" ? " selected" : ""}>${d}</option>`).join("")}</select>
+      <select class="s-stars">${Array.from({ length: 10 }, (_, i) => `<option${i === 7 ? " selected" : ""}>★${i + 1}</option>`).join("")}</select>
+      <input type="text" class="s-score" placeholder="成績分數" inputmode="numeric">
+      <select class="s-comfort">${COMFORTS.map(c => `<option>${c}</option>`).join("")}</select>
+    </div>`;
+  div.querySelector(".del-song").onclick = () => { div.remove(); invalidatePreview(); };
+  div.querySelectorAll("input,select").forEach(el => el.addEventListener("input", invalidatePreview));
+  return div;
+}
+document.getElementById("add-song").onclick = () => {
+  document.getElementById("song-list").appendChild(songRow());
+  invalidatePreview();
+};
+document.getElementById("f-note").addEventListener("input", invalidatePreview);
+document.getElementById("f-date").addEventListener("input", invalidatePreview);
+
+function invalidatePreview() {
+  previewBlock = "";
+  document.getElementById("preview").hidden = true;
+  document.getElementById("confirm-row").hidden = true;
+  document.getElementById("f-confirm").checked = false;
+  document.getElementById("btn-sync").disabled = true;
+  document.getElementById("btn-copy").disabled = true;
+  setMsg("", "");
+}
+
+function collectSongs() {
+  return Array.from(document.querySelectorAll(".song-row")).map(row => ({
+    name: row.querySelector(".s-name").value.trim(),
+    difficulty: row.querySelector(".s-diff").value,
+    stars: row.querySelector(".s-stars").value,
+    score: row.querySelector(".s-score").value.trim(),
+    comfort: row.querySelector(".s-comfort").value,
+  })).filter(s => s.name);
+}
+
+function buildBlock() {
+  const date = document.getElementById("f-date").value;
+  if (!date) return { error: "請選擇日期" };
+  if (!selectedFeel) return { error: "請選擇手感自評" };
+  const note = document.getElementById("f-note").value.trim();
+  const songs = collectSongs();
+  let md = `## ${date}\n- 手感自評: ${selectedFeel}\n- 備註: ${note}\n- 歌曲:\n`;
+  if (songs.length) {
+    for (const s of songs) md += `  - ${s.name} | ${s.difficulty} | ${s.stars} | ${s.score || "—"} | ${s.comfort}\n`;
+  } else {
+    md += `  - (尚未填寫)\n`;
+  }
+  if (selectedFeel === "很有差距" && songs.length) {
+    md += "\n";
+    for (const s of songs) {
+      const chart = s.difficulty === "鬼(裏)" ? "おに+裏譜面" : "おに+譜面";
+      const q = encodeURIComponent(`太鼓の達人 ${s.name}`).replace(/%20/g, "+") + "+" + chart;
+      md += `[${s.name} 參考影片](https://www.youtube.com/results?search_query=${q})\n`;
+    }
+  }
+  return { date, md };
+}
+
+document.getElementById("btn-preview").onclick = () => {
+  const r = buildBlock();
+  if (r.error) { setMsg(r.error, "err"); return; }
+  previewBlock = r.md;
+  const pre = document.getElementById("preview");
+  pre.textContent = r.md;
+  pre.hidden = false;
+  document.getElementById("confirm-row").hidden = false;
+  document.getElementById("btn-copy").disabled = false;
+  setMsg("", "");
+};
+
+document.getElementById("f-confirm").addEventListener("change", e => {
+  document.getElementById("btn-sync").disabled = !e.target.checked || !previewBlock;
+});
+
+document.getElementById("btn-copy").onclick = async () => {
+  try {
+    await navigator.clipboard.writeText(previewBlock);
+    setMsg("已複製,可貼到 GitHub 網頁編輯或 Cursor agent。", "ok");
+  } catch { setMsg("複製失敗,請手動選取預覽內容。", "err"); }
+};
+
+// ── 同步到 GitHub(contents API)──────────────────────────────────
+
+function getToken() { return localStorage.getItem("gh_token") || ""; }
+
+function renderTokenRow() {
+  const row = document.getElementById("token-row");
+  if (getToken()) {
+    row.innerHTML = `Token:已設定 · <a href="#" id="tk-clear">清除</a>`;
+    row.querySelector("#tk-clear").onclick = e => { e.preventDefault(); localStorage.removeItem("gh_token"); renderTokenRow(); };
+  } else {
+    row.innerHTML = `尚未設定 GitHub Token(同步功能需要)· <a href="#" id="tk-set">設定</a><br>建議用 Fine-grained token,只授權本 repo 的 Contents 讀寫。`;
+    row.querySelector("#tk-set").onclick = e => {
+      e.preventDefault();
+      const t = prompt("貼上 GitHub Personal Access Token(僅儲存在此裝置瀏覽器):");
+      if (t && t.trim()) { localStorage.setItem("gh_token", t.trim()); renderTokenRow(); }
+    };
+  }
+}
+renderTokenRow();
+
+function setMsg(text, cls) {
+  const el = document.getElementById("sync-msg");
+  el.textContent = text;
+  el.className = cls;
+}
+
+function b64EncodeUtf8(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  bytes.forEach(b => { bin += String.fromCharCode(b); });
+  return btoa(bin);
+}
+function b64DecodeUtf8(b64) {
+  const bin = atob(b64.replace(/\s/g, ""));
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+/** 將新區塊合併進日誌:同日期則整塊取代,否則附加到檔尾。 */
+function mergeBlock(content, date, block) {
+  const marker = `## ${date}`;
+  const idx = content.indexOf(`\n${marker}`);
+  if (idx >= 0) {
+    const next = content.indexOf("\n## ", idx + 1);
+    const before = content.slice(0, idx + 1);
+    const after = next >= 0 ? content.slice(next + 1) : "";
+    return before + block.replace(/\n*$/, "\n") + (after ? "\n" + after : "");
+  }
+  return content.replace(/\n*$/, "\n") + "\n" + block.replace(/\n*$/, "\n");
+}
+
+document.getElementById("btn-sync").onclick = async () => {
+  const token = getToken();
+  if (!token) { setMsg("請先設定 GitHub Token,或改用「複製紀錄內容」。", "err"); return; }
+  const r = buildBlock();
+  if (r.error || !previewBlock) { setMsg("請先產生預覽。", "err"); return; }
+  const btn = document.getElementById("btn-sync");
+  btn.disabled = true;
+  setMsg("同步中…", "");
+  try {
+    const headers = { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" };
+    const getResp = await fetch(`${API_URL}?ref=${BRANCH}`, { headers, cache: "no-store" });
+    if (!getResp.ok) throw new Error(`讀取檔案失敗(HTTP ${getResp.status})`);
+    const fileInfo = await getResp.json();
+    const merged = mergeBlock(b64DecodeUtf8(fileInfo.content), r.date, previewBlock);
+    const putResp = await fetch(API_URL, {
+      method: "PUT",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: `taiko log: ${r.date}`,
+        content: b64EncodeUtf8(merged),
+        sha: fileInfo.sha,
+        branch: BRANCH,
+      }),
+    });
+    if (!putResp.ok) {
+      const err = await putResp.json().catch(() => ({}));
+      throw new Error(`寫入失敗(HTTP ${putResp.status})${err.message ? ":" + err.message : ""}`);
+    }
+    setMsg(`已同步到 GitHub(${r.date}),頁面資料已更新。`, "ok");
+    document.getElementById("f-confirm").checked = false;
+    await loadAndRender();
+  } catch (err) {
+    setMsg(String(err.message || err), "err");
+    btn.disabled = false;
+  }
+};
 </script>
 </body>
 </html>
