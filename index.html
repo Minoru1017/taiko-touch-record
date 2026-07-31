@@ -85,6 +85,10 @@
   .song-head { display: flex; align-items: center; gap: 8px; }
   .song-head input { flex: 1; }
   .del-song { background: none; border: none; color: var(--red); font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; }
+  .preview-btn { flex: none; background: var(--fill); border: 1px solid var(--stroke); border-radius: 999px; color: var(--text-2); font-size: 12px; padding: 5px 10px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .yt-box { margin-top: 8px; }
+  .yt-box iframe { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 8px; display: block; }
+  .yt-box a { color: var(--link); font-size: 13px; text-decoration: none; }
   #preview { background: var(--bg); border: 1px dashed var(--stroke); border-radius: 8px; padding: 12px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; color: var(--text-2); margin-top: 12px; }
   .confirm-row { display: flex; align-items: center; gap: 8px; margin: 12px 0; font-size: 13.5px; }
   .confirm-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); }
@@ -273,17 +277,55 @@ loadAndRender();
 
 // ── 歌名建議清單(songs.json,無檔案時僅保留自由輸入)──────────────
 
+const SONG_YT = {};
 fetch(SONGS_URL, { cache: "no-store" })
   .then(r => r.ok ? r.json() : [])
   .then(list => {
     const dl = document.getElementById("song-options");
-    for (const name of list) {
+    for (const item of list) {
+      const name = typeof item === "string" ? item : item.name;
+      if (!name) continue;
+      if (typeof item === "object" && item.yt) SONG_YT[name] = item.yt;
       const opt = document.createElement("option");
       opt.value = name;
       dl.appendChild(opt);
     }
   })
   .catch(() => {});
+
+// ── 試聽:內嵌官方/原曲 YouTube 播放器 ────────────────────────────
+
+let playerBox = null;
+function togglePreview(row) {
+  const name = row.querySelector(".s-name").value.trim();
+  if (playerBox && playerBox.parentElement === row) {
+    playerBox.remove();
+    playerBox = null;
+    return;
+  }
+  if (!name) { setMsg("請先輸入或挑選歌名再試聽。", "err"); return; }
+  if (!playerBox) {
+    playerBox = document.createElement("div");
+    playerBox.className = "yt-box";
+  }
+  playerBox.innerHTML = "";
+  const id = SONG_YT[name];
+  if (id) {
+    const f = document.createElement("iframe");
+    f.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&playsinline=1`;
+    f.allow = "autoplay; encrypted-media; picture-in-picture";
+    f.allowFullscreen = true;
+    playerBox.appendChild(f);
+  } else {
+    const a = document.createElement("a");
+    a.href = `https://www.youtube.com/results?search_query=${encodeURIComponent("太鼓の達人 " + name)}`;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = `清單中沒有這首的影片,點此在 YouTube 搜尋「${name}」`;
+    playerBox.appendChild(a);
+  }
+  row.appendChild(playerBox);
+}
 
 // ── 新增紀錄表單 ─────────────────────────────────────────────────
 
@@ -314,6 +356,7 @@ function songRow() {
   div.innerHTML = `
     <div class="song-head">
       <input type="text" class="s-name" placeholder="歌名(輸入或從清單挑選)" list="song-options">
+      <button type="button" class="preview-btn" title="試聽">▶ 試聽</button>
       <button type="button" class="del-song" title="移除">×</button>
     </div>
     <div class="song-grid">
@@ -322,7 +365,12 @@ function songRow() {
       <input type="text" class="s-score" placeholder="成績分數" inputmode="numeric">
       <select class="s-comfort">${COMFORTS.map(c => `<option>${c}</option>`).join("")}</select>
     </div>`;
-  div.querySelector(".del-song").onclick = () => { div.remove(); invalidatePreview(); };
+  div.querySelector(".del-song").onclick = () => {
+    if (playerBox && playerBox.parentElement === div) { playerBox.remove(); playerBox = null; }
+    div.remove();
+    invalidatePreview();
+  };
+  div.querySelector(".preview-btn").onclick = () => togglePreview(div);
   div.querySelectorAll("input,select").forEach(el => el.addEventListener("input", invalidatePreview));
   return div;
 }
