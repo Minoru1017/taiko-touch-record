@@ -151,12 +151,14 @@
   <a class="btn" id="gh-link" href="#">在 GitHub 檢視日誌</a>
 </div>
 <p id="status">載入中…</p>
+<datalist id="song-options"></datalist>
 
 <script>
 const REPO = "Minoru1017/taiko-touch-record";
 const BRANCH = "main";
 const FILE = "TAIKO_FEEL_LOG.md";
 const RAW_URL = `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${FILE}`;
+const SONGS_URL = `https://raw.githubusercontent.com/${REPO}/${BRANCH}/songs.json`;
 const API_URL = `https://api.github.com/repos/${REPO}/contents/${FILE}`;
 document.getElementById("gh-link").href = `https://github.com/${REPO}/blob/${BRANCH}/${FILE}`;
 document.getElementById("edit-link").href = `https://github.com/${REPO}/edit/${BRANCH}/${FILE}`;
@@ -269,6 +271,20 @@ function loadAndRender() {
 }
 loadAndRender();
 
+// ── 歌名建議清單(songs.json,無檔案時僅保留自由輸入)──────────────
+
+fetch(SONGS_URL, { cache: "no-store" })
+  .then(r => r.ok ? r.json() : [])
+  .then(list => {
+    const dl = document.getElementById("song-options");
+    for (const name of list) {
+      const opt = document.createElement("option");
+      opt.value = name;
+      dl.appendChild(opt);
+    }
+  })
+  .catch(() => {});
+
 // ── 新增紀錄表單 ─────────────────────────────────────────────────
 
 let selectedFeel = "";
@@ -297,7 +313,7 @@ function songRow() {
   div.className = "song-row";
   div.innerHTML = `
     <div class="song-head">
-      <input type="text" class="s-name" placeholder="歌名">
+      <input type="text" class="s-name" placeholder="歌名(輸入或從清單挑選)" list="song-options">
       <button type="button" class="del-song" title="移除">×</button>
     </div>
     <div class="song-grid">
