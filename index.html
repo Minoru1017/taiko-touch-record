@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>太鼓の達人 手感紀錄表</title>
+<style>
+  :root {
+    --bg: #181818;
+    --surface: #1f1f1f;
+    --text: rgba(228, 228, 228, 0.92);
+    --text-2: rgba(228, 228, 228, 0.55);
+    --text-3: rgba(228, 228, 228, 0.37);
+    --stroke: rgba(228, 228, 228, 0.12);
+    --fill: rgba(228, 228, 228, 0.07);
+    --red: #FC6B83;
+    --orange: #DD7F76;
+    --gray: rgba(228, 228, 228, 0.54);
+    --blue: #7BAFE9;
+    --green: #3FA266;
+    --link: #87c3ff;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 20px 16px calc(32px + env(safe-area-inset-bottom));
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 22px; font-weight: 700; }
+  h2 { font-size: 15px; font-weight: 600; color: var(--text-2); margin: 28px 0 10px; letter-spacing: 0.02em; }
+  .caption { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+  .stat { background: var(--surface); border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 10px; }
+  .stat .value { font-size: 17px; font-weight: 700; }
+  .stat .label { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+  .scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin: 14px 0 6px; }
+  .scale .seg { height: 8px; border-radius: 4px; background: var(--fill); }
+  .scale-labels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+  .scale-labels span { font-size: 10px; color: var(--text-3); text-align: center; }
+  .scale-labels span.on { color: var(--text); font-weight: 600; }
+  .note { background: var(--fill); border: 1px solid var(--stroke); border-radius: 10px; padding: 12px 14px; font-size: 13.5px; color: var(--text-2); margin-top: 12px; }
+  .note b { color: var(--text); display: block; font-size: 12px; margin-bottom: 4px; }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--stroke); border-radius: 10px; overflow: hidden; font-size: 13px; display: block; overflow-x: auto; white-space: nowrap; }
+  table thead th { text-align: left; font-size: 11px; color: var(--text-3); font-weight: 600; padding: 8px 12px; border-bottom: 1px solid var(--stroke); }
+  table td { padding: 8px 12px; border-bottom: 1px solid var(--stroke); }
+  table tr:last-child td { border-bottom: none; }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
+  details { border: 1px solid var(--stroke); border-radius: 10px; background: var(--surface); margin-bottom: 8px; }
+  details summary { padding: 10px 14px; cursor: pointer; font-size: 13.5px; list-style: none; display: flex; align-items: center; gap: 8px; }
+  details summary::-webkit-details-marker { display: none; }
+  details .body { padding: 0 14px 12px; font-size: 13px; color: var(--text-2); }
+  details .body a { color: var(--link); text-decoration: none; display: block; margin-top: 6px; }
+  .feel-tag { margin-left: auto; font-size: 12px; font-weight: 600; }
+  .howto { border: 1px solid var(--stroke); border-radius: 10px; padding: 14px; font-size: 13px; color: var(--text-2); }
+  .howto ol { padding-left: 20px; margin-top: 6px; }
+  .howto li { margin-bottom: 4px; }
+  .toolbar { display: flex; gap: 8px; margin-top: 16px; }
+  .btn { flex: 1; text-align: center; background: var(--fill); border: 1px solid var(--stroke); border-radius: 8px; padding: 8px 0; font-size: 13px; color: var(--text); text-decoration: none; }
+  #status { font-size: 12px; color: var(--text-3); margin-top: 20px; text-align: center; }
+</style>
+</head>
+<body>
+<h1>太鼓の達人 手感紀錄表</h1>
+<p class="caption">資料來源:GitHub · <span id="repo-name">Minoru1017/taiko-touch-record</span> · TAIKO_FEEL_LOG.md</p>
+
+<div id="app"></div>
+
+<h2>手機記錄流程</h2>
+<div class="howto">
+  在 Cursor 手機版對這個 repo 開啟 agent 對話:
+  <ol>
+    <li>說「記錄今天的手感」,並描述自評、備註與歌曲。</li>
+    <li>Agent 會先列出<b>草稿</b>供你確認,不會直接寫入。</li>
+    <li>確認無誤後回覆「<b>確認同步</b>」,agent 才會寫入日誌並 commit + push 到 GitHub。</li>
+    <li>回到本頁下拉重新整理,即可看到最新紀錄。</li>
+  </ol>
+</div>
+
+<div class="toolbar">
+  <a class="btn" href="javascript:location.reload()">重新整理</a>
+  <a class="btn" id="gh-link" href="#">在 GitHub 檢視日誌</a>
+</div>
+<p id="status">載入中…</p>
+
+<script>
+const REPO = "Minoru1017/taiko-touch-record";
+const BRANCH = "main";
+const FILE = "TAIKO_FEEL_LOG.md";
+const RAW_URL = `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${FILE}`;
+document.getElementById("gh-link").href = `https://github.com/${REPO}/blob/${BRANCH}/${FILE}`;
+
+const FEEL_LEVELS = ["很有差距", "略差", "表現相當", "略好", "非常的好"];
+const FEEL_COLOR = { "很有差距": "var(--red)", "略差": "var(--orange)", "表現相當": "var(--gray)", "略好": "var(--blue)", "非常的好": "var(--green)" };
+
+function parseLog(md) {
+  const entries = [];
+  const dailyPart = md.split(/^# 每日紀錄\s*$/m)[1] || "";
+  for (const block of dailyPart.split(/^## /m).slice(1)) {
+    const lines = block.split("\n");
+    const entry = { date: lines[0].trim(), feel: "", note: "", songs: [], links: [] };
+    let inSongs = false;
+    for (const line of lines.slice(1)) {
+      let m;
+      if ((m = line.match(/^- 手感自評[::]\s*(.*)/))) { entry.feel = m[1].trim(); inSongs = false; }
+      else if ((m = line.match(/^- 備註[::]\s*(.*)/))) { entry.note = m[1].trim().replace(/^[((]?可留空[))]?$/, ""); inSongs = false; }
+      else if (/^- 歌曲[::]?/.test(line)) { inSongs = true; }
+      else if ((m = line.match(/^\s*\[([^\]]+)\]\(([^)]+)\)/))) { entry.links.push({ text: m[1], url: m[2] }); }
+      else if (inSongs && (m = line.match(/^\s+-\s+(.*)/))) {
+        const raw = m[1].trim();
+        if (/尚未填寫/.test(raw)) continue;
+        const parts = raw.split("|").map(s => s.trim());
+        if (parts.length >= 2) entry.songs.push({ name: parts[0], difficulty: parts[1] || "", stars: parts[2] || "", score: parts[3] || "", comfort: parts[4] || "" });
+      }
+    }
+    if (entry.date) entries.push(entry);
+  }
+  const danHistory = [];
+  const danPart = (md.split(/^## 段位歷程\s*$/m)[1] || "").split(/^#/m)[0].split(/^---/m)[0];
+  for (const line of danPart.split("\n")) {
+    const m = line.match(/^- (.+?)[::](.+)/);
+    if (m) danHistory.push({ date: m[1].trim(), result: m[2].trim() });
+  }
+  return { entries, danHistory };
+}
+
+function esc(s) { return s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+function feelDot(feel) {
+  return `<span class="dot" style="background:${FEEL_COLOR[feel] || "var(--gray)"}"></span>`;
+}
+
+function render({ entries, danHistory }) {
+  const app = document.getElementById("app");
+  let html = "";
+  const latest = entries[entries.length - 1];
+  const currentDan = danHistory[danHistory.length - 1];
+
+  html += `<div class="stats">
+    <div class="stat"><div class="value">${currentDan ? esc(currentDan.result) : "—"}</div><div class="label">目前段位</div></div>
+    <div class="stat"><div class="value">${entries.length} 天</div><div class="label">累計紀錄天數</div></div>
+    <div class="stat"><div class="value" style="color:${latest ? FEEL_COLOR[latest.feel] || "var(--text)" : "var(--text)"}">${latest ? esc(latest.feel) : "—"}</div><div class="label">最新手感</div></div>
+  </div>`;
+
+  if (latest) {
+    html += `<h2>最新紀錄 · ${esc(latest.date)}</h2>`;
+    html += `<div class="scale">` + FEEL_LEVELS.map(l =>
+      `<div class="seg" style="${l === latest.feel ? `background:${FEEL_COLOR[l]}` : ""}"></div>`).join("") + `</div>`;
+    html += `<div class="scale-labels">` + FEEL_LEVELS.map(l =>
+      `<span class="${l === latest.feel ? "on" : ""}">${l}</span>`).join("") + `</div>`;
+    if (latest.note) html += `<div class="note"><b>備註</b>${esc(latest.note)}</div>`;
+    if (latest.songs.length) {
+      html += `<h2>本日歌曲</h2><table><thead><tr><th>歌名</th><th>難易度</th><th>星級</th><th>分數</th><th>順手度</th></tr></thead><tbody>` +
+        latest.songs.map(s => `<tr><td>${esc(s.name)}</td><td>${esc(s.difficulty)}</td><td>${esc(s.stars)}</td><td>${esc(s.score)}</td><td>${esc(s.comfort)}</td></tr>`).join("") +
+        `</tbody></table>`;
+    }
+    if (latest.links.length) {
+      html += `<div class="note"><b>參考影片</b>` + latest.links.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.text)}</a>`).join("") + `</div>`;
+    }
+  }
+
+  if (entries.length) {
+    html += `<h2>每日紀錄</h2>`;
+    html += entries.slice().reverse().map(e => `
+      <details>
+        <summary>${feelDot(e.feel)}${esc(e.date)}<span class="feel-tag" style="color:${FEEL_COLOR[e.feel] || "var(--gray)"}">${esc(e.feel)}</span></summary>
+        <div class="body">
+          ${e.note ? `<div>${esc(e.note)}</div>` : ""}
+          ${e.songs.length ? `<div style="margin-top:6px">${e.songs.map(s => `${esc(s.name)} ｜ ${esc(s.difficulty)} ${esc(s.stars)} ｜ ${esc(s.score)} ｜ ${esc(s.comfort)}`).join("<br>")}</div>` : `<div style="margin-top:6px;color:var(--text-3)">歌曲尚未填寫</div>`}
+          ${e.links.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.text)}</a>`).join("")}
+        </div>
+      </details>`).join("");
+  }
+
+  if (danHistory.length) {
+    html += `<h2>段位歷程</h2><table><thead><tr><th>時間</th><th>結果</th></tr></thead><tbody>` +
+      danHistory.map(d => `<tr><td>${esc(d.date)}</td><td>${esc(d.result)}</td></tr>`).join("") +
+      `</tbody></table>`;
+  }
+
+  app.innerHTML = html;
+}
+
+fetch(RAW_URL, { cache: "no-store" })
+  .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
+  .then(md => {
+    render(parseLog(md));
+    document.getElementById("status").textContent = `已更新 · ${new Date().toLocaleString("zh-TW", { hour12: false })}`;
+  })
+  .catch(err => {
+    document.getElementById("status").textContent = `載入失敗:${err.message}(repo 若為 private,raw 檔案無法公開讀取)`;
+  });
+</script>
+</body>
+</html>
