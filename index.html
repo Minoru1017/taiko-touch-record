@@ -92,11 +92,23 @@
   #preview { background: var(--bg); border: 1px dashed var(--stroke); border-radius: 8px; padding: 12px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; color: var(--text-2); margin-top: 12px; }
   .confirm-row { display: flex; align-items: center; gap: 8px; margin: 12px 0; font-size: 13.5px; }
   .confirm-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); }
-  .token-row { font-size: 12px; color: var(--text-3); margin-top: 10px; }
-  .token-row a { color: var(--link); text-decoration: none; }
   #sync-msg { font-size: 13px; margin-top: 10px; }
   #sync-msg.ok { color: var(--green); }
   #sync-msg.err { color: var(--red); }
+  #gh-settings { border: 1px solid var(--stroke); border-radius: 10px; background: var(--surface); padding: 14px; margin-top: 8px; }
+  #gh-settings .hint { font-size: 12.5px; color: var(--text-2); margin: 0 0 12px; line-height: 1.55; }
+  #gh-settings .hint a { color: var(--link); text-decoration: none; }
+  #gh-settings .hint code { font-size: 11.5px; background: var(--fill); padding: 1px 5px; border-radius: 4px; }
+  .token-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; margin-bottom: 10px; }
+  .token-status .badge { width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
+  .token-status.ready .badge { background: var(--green); }
+  .token-input-row { display: flex; gap: 8px; }
+  .token-input-row input { flex: 1; }
+  .token-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .token-actions .btn { flex: 1; }
+  #token-msg { font-size: 12.5px; margin-top: 10px; min-height: 1.2em; }
+  #token-msg.ok { color: var(--green); }
+  #token-msg.err { color: var(--red); }
 </style>
 </head>
 <body>
@@ -138,14 +150,36 @@
     <a class="btn" id="edit-link" target="_blank" rel="noopener">改用 GitHub 網頁編輯</a>
   </div>
   <div id="sync-msg"></div>
-  <div class="token-row" id="token-row"></div>
+</div>
+
+<h2>GitHub Token 設定</h2>
+<div id="gh-settings">
+  <div class="token-status" id="token-status"><span class="badge"></span><span class="label">檢查中…</span></div>
+  <p class="hint">
+    「同步到 GitHub」會用 GitHub Contents API 直接更新 <code>TAIKO_FEEL_LOG.md</code>。
+    Token 只存在此裝置瀏覽器的 localStorage,不會上傳到網頁主機。
+    建議建立 <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Fine-grained token</a>,
+    Repository 選 <code>Minoru1017/taiko-touch-record</code>,權限開 <code>Contents: Read and write</code>。
+  </p>
+  <div class="field" style="margin-bottom:0">
+    <label for="f-token">Personal Access Token</label>
+    <div class="token-input-row">
+      <input type="password" id="f-token" autocomplete="off" spellcheck="false" placeholder="貼上 gh… 或 github_pat_…">
+    </div>
+  </div>
+  <div class="token-actions">
+    <button class="btn primary" type="button" id="btn-token-save">儲存</button>
+    <button class="btn" type="button" id="btn-token-test">測試連線</button>
+    <button class="btn" type="button" id="btn-token-clear">清除</button>
+  </div>
+  <div id="token-msg"></div>
 </div>
 
 <h2>使用說明</h2>
 <div class="howto">
   兩種記錄方式:
   <ol>
-    <li><b>本頁表單</b>:填寫後按「產生預覽」→ 勾選確認 → 「同步到 GitHub」直接寫入日誌(需先設定一次 GitHub Token)。沒有 token 時,可「複製紀錄內容」再用 GitHub 網頁編輯貼上,或貼給 Cursor agent。</li>
+    <li><b>本頁表單</b>:先在「GitHub Token 設定」儲存一次 Token → 填寫紀錄 →「產生預覽」→ 勾選確認 →「同步到 GitHub」。沒有 token 時,可「複製紀錄內容」再用 GitHub 網頁編輯貼上,或貼給 Cursor agent。</li>
     <li><b>Cursor 手機版 agent</b>:對這個 repo 說「記錄今天的手感」,agent 會先列草稿,回覆「確認同步」後才寫入並 push。</li>
   </ol>
 </div>
@@ -447,31 +481,106 @@ document.getElementById("btn-copy").onclick = async () => {
   } catch { setMsg("複製失敗,請手動選取預覽內容。", "err"); }
 };
 
-// ── 同步到 GitHub(contents API)──────────────────────────────────
+// ── GitHub Token 設定 + 同步(contents API)────────────────────────
 
-function getToken() { return localStorage.getItem("gh_token") || ""; }
+const TOKEN_KEY = "gh_token";
 
-function renderTokenRow() {
-  const row = document.getElementById("token-row");
-  if (getToken()) {
-    row.innerHTML = `Token:已設定 · <a href="#" id="tk-clear">清除</a>`;
-    row.querySelector("#tk-clear").onclick = e => { e.preventDefault(); localStorage.removeItem("gh_token"); renderTokenRow(); };
-  } else {
-    row.innerHTML = `尚未設定 GitHub Token(同步功能需要)· <a href="#" id="tk-set">設定</a><br>建議用 Fine-grained token,只授權本 repo 的 Contents 讀寫。`;
-    row.querySelector("#tk-set").onclick = e => {
-      e.preventDefault();
-      const t = prompt("貼上 GitHub Personal Access Token(僅儲存在此裝置瀏覽器):");
-      if (t && t.trim()) { localStorage.setItem("gh_token", t.trim()); renderTokenRow(); }
-    };
-  }
+function getToken() { return localStorage.getItem(TOKEN_KEY) || ""; }
+
+function setTokenMsg(text, cls) {
+  const el = document.getElementById("token-msg");
+  el.textContent = text;
+  el.className = cls || "";
 }
-renderTokenRow();
 
 function setMsg(text, cls) {
   const el = document.getElementById("sync-msg");
   el.textContent = text;
-  el.className = cls;
+  el.className = cls || "";
 }
+
+function renderTokenStatus() {
+  const status = document.getElementById("token-status");
+  const has = !!getToken();
+  status.className = "token-status" + (has ? " ready" : "");
+  status.querySelector(".label").textContent = has
+    ? "Token 已設定(此裝置瀏覽器)"
+    : "尚未設定 Token(同步功能無法寫入 GitHub)";
+  const input = document.getElementById("f-token");
+  if (!input.value) input.placeholder = has ? "已儲存 · 若要更換請貼上新 Token" : "貼上 gh… 或 github_pat_…";
+}
+
+function ghHeaders(token) {
+  return {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+}
+
+function describeGhError(status, body) {
+  const msg = (body && body.message) ? String(body.message) : "";
+  if (status === 401) return "Token 無效或已過期,請重新建立並儲存。";
+  if (status === 403) {
+    if (/rate limit/i.test(msg)) return "GitHub API 速率受限,請稍後再試。";
+    return "權限不足:請確認 Fine-grained token 對本 repo 有 Contents: Read and write。";
+  }
+  if (status === 404) return "找不到檔案或 repo(也可能是 Token 看不到此私有資源)。";
+  if (status === 409) return "檔案已被其他人更新,請重新整理後再同步。";
+  if (status === 422) return `寫入被拒絕${msg ? ":" + msg : ""}`;
+  return `HTTP ${status}${msg ? ":" + msg : ""}`;
+}
+
+async function testToken(token) {
+  const headers = ghHeaders(token);
+  const repoResp = await fetch(`https://api.github.com/repos/${REPO}`, { headers, cache: "no-store" });
+  if (!repoResp.ok) {
+    const body = await repoResp.json().catch(() => ({}));
+    throw new Error(describeGhError(repoResp.status, body));
+  }
+  const fileResp = await fetch(`${API_URL}?ref=${BRANCH}`, { headers, cache: "no-store" });
+  if (!fileResp.ok) {
+    const body = await fileResp.json().catch(() => ({}));
+    throw new Error("Repo 可讀,但讀取日誌失敗:" + describeGhError(fileResp.status, body));
+  }
+  return true;
+}
+
+document.getElementById("btn-token-save").onclick = async () => {
+  const raw = document.getElementById("f-token").value.trim();
+  if (!raw) { setTokenMsg("請先貼上 Token。", "err"); return; }
+  setTokenMsg("驗證中…", "");
+  try {
+    await testToken(raw);
+    localStorage.setItem(TOKEN_KEY, raw);
+    document.getElementById("f-token").value = "";
+    renderTokenStatus();
+    setTokenMsg("已儲存並驗證成功,可以同步到 GitHub。", "ok");
+  } catch (err) {
+    setTokenMsg(String(err.message || err), "err");
+  }
+};
+
+document.getElementById("btn-token-test").onclick = async () => {
+  const token = document.getElementById("f-token").value.trim() || getToken();
+  if (!token) { setTokenMsg("請先貼上或儲存 Token。", "err"); return; }
+  setTokenMsg("測試連線中…", "");
+  try {
+    await testToken(token);
+    setTokenMsg("連線成功:可讀取本 repo 的日誌檔。", "ok");
+  } catch (err) {
+    setTokenMsg(String(err.message || err), "err");
+  }
+};
+
+document.getElementById("btn-token-clear").onclick = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  document.getElementById("f-token").value = "";
+  renderTokenStatus();
+  setTokenMsg("已清除此裝置上的 Token。", "ok");
+};
+
+renderTokenStatus();
 
 function b64EncodeUtf8(str) {
   const bytes = new TextEncoder().encode(str);
@@ -488,29 +597,45 @@ function b64DecodeUtf8(b64) {
 /** 將新區塊合併進日誌:同日期則整塊取代,否則附加到檔尾。 */
 function mergeBlock(content, date, block) {
   const marker = `## ${date}`;
-  const idx = content.indexOf(`\n${marker}`);
-  if (idx >= 0) {
-    const next = content.indexOf("\n## ", idx + 1);
-    const before = content.slice(0, idx + 1);
-    const after = next >= 0 ? content.slice(next + 1) : "";
+  const re = new RegExp(`(?:^|\\n)${marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=\\n|$)`);
+  const m = re.exec(content);
+  if (m) {
+    const start = m.index + (m[0].startsWith("\n") ? 1 : 0);
+    const rest = content.slice(start + marker.length);
+    const nextRel = rest.search(/\n## /);
+    const before = content.slice(0, start);
+    const after = nextRel >= 0 ? rest.slice(nextRel + 1) : "";
     return before + block.replace(/\n*$/, "\n") + (after ? "\n" + after : "");
   }
   return content.replace(/\n*$/, "\n") + "\n" + block.replace(/\n*$/, "\n");
 }
 
+function focusTokenSettings() {
+  document.getElementById("gh-settings").scrollIntoView({ behavior: "smooth", block: "center" });
+  document.getElementById("f-token").focus();
+}
+
 document.getElementById("btn-sync").onclick = async () => {
   const token = getToken();
-  if (!token) { setMsg("請先設定 GitHub Token,或改用「複製紀錄內容」。", "err"); return; }
+  if (!token) {
+    setMsg("請先在「GitHub Token 設定」儲存 Token,或改用「複製紀錄內容」。", "err");
+    focusTokenSettings();
+    return;
+  }
   const r = buildBlock();
   if (r.error || !previewBlock) { setMsg("請先產生預覽。", "err"); return; }
   const btn = document.getElementById("btn-sync");
   btn.disabled = true;
   setMsg("同步中…", "");
   try {
-    const headers = { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" };
+    const headers = ghHeaders(token);
     const getResp = await fetch(`${API_URL}?ref=${BRANCH}`, { headers, cache: "no-store" });
-    if (!getResp.ok) throw new Error(`讀取檔案失敗(HTTP ${getResp.status})`);
+    if (!getResp.ok) {
+      const body = await getResp.json().catch(() => ({}));
+      throw new Error("讀取失敗:" + describeGhError(getResp.status, body));
+    }
     const fileInfo = await getResp.json();
+    if (!fileInfo.sha || !fileInfo.content) throw new Error("讀取失敗:API 未回傳檔案內容。");
     const merged = mergeBlock(b64DecodeUtf8(fileInfo.content), r.date, previewBlock);
     const putResp = await fetch(API_URL, {
       method: "PUT",
@@ -524,14 +649,32 @@ document.getElementById("btn-sync").onclick = async () => {
     });
     if (!putResp.ok) {
       const err = await putResp.json().catch(() => ({}));
-      throw new Error(`寫入失敗(HTTP ${putResp.status})${err.message ? ":" + err.message : ""}`);
+      throw new Error("寫入失敗:" + describeGhError(putResp.status, err));
     }
-    setMsg(`已同步到 GitHub(${r.date}),頁面資料已更新。`, "ok");
+    const result = await putResp.json().catch(() => ({}));
+    const commitUrl = result.commit && result.commit.html_url;
+    render(parseLog(merged));
+    document.getElementById("status").textContent =
+      `已同步 · ${new Date().toLocaleString("zh-TW", { hour12: false })}`;
     document.getElementById("f-confirm").checked = false;
-    await loadAndRender();
+    document.getElementById("btn-sync").disabled = true;
+    if (commitUrl) {
+      setMsg(`已同步到 GitHub(${r.date})。`, "ok");
+      const el = document.getElementById("sync-msg");
+      el.appendChild(document.createTextNode(" "));
+      const a = document.createElement("a");
+      a.href = commitUrl;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.textContent = "查看 commit";
+      a.style.color = "var(--link)";
+      el.appendChild(a);
+    } else {
+      setMsg(`已同步到 GitHub(${r.date}),頁面資料已更新。`, "ok");
+    }
   } catch (err) {
     setMsg(String(err.message || err), "err");
-    btn.disabled = false;
+    btn.disabled = !document.getElementById("f-confirm").checked;
   }
 };
 </script>
