@@ -161,6 +161,9 @@
     background: var(--drum-rim);
     border: 2px solid #b9814d;
     overflow: hidden;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
   }
   .taiko-drum::after {
     content: "";
@@ -348,7 +351,7 @@
 <section class="taiko-play" aria-labelledby="taiko-title">
   <p class="taiko-kicker">Free play</p>
   <h2 class="taiko-title" id="taiko-title">敲一下，找回手感</h2>
-  <p class="taiko-hint">紅色左右鼓面是「咚」，米色左右鼓邊是「卡」</p>
+  <p class="taiko-hint">紅色左右鼓面是「咚」，米色左右鼓邊是「卡」・可按住滑動，鬆手判定</p>
   <div class="taiko-wrap">
     <div class="taiko-drum">
       <button class="hit-zone hit-zone--ka left" type="button" data-hit="ka" data-side="left" aria-label="敲左鼓邊，發出卡"></button>
@@ -598,8 +601,59 @@ function strikeTaiko(type, side, sourceButton) {
   }, 420);
 }
 
+const taikoDrum = document.querySelector(".taiko-drum");
+const activeTaikoPointers = new Set();
+
+taikoDrum.addEventListener("pointerdown", event => {
+  if (event.pointerType === "mouse" && event.button !== 0) return;
+  activeTaikoPointers.add(event.pointerId);
+  if (taikoDrum.setPointerCapture) taikoDrum.setPointerCapture(event.pointerId);
+  event.preventDefault();
+});
+
+function getTaikoHitAt(clientX, clientY) {
+  const rect = taikoDrum.getBoundingClientRect();
+  const radius = rect.width / 2;
+  const dx = clientX - (rect.left + radius);
+  const dy = clientY - (rect.top + rect.height / 2);
+  const distance = Math.hypot(dx, dy);
+  if (distance > radius) return null;
+
+  return {
+    type: distance <= rect.width * 0.36 ? "don" : "ka",
+    side: dx < 0 ? "left" : "right",
+  };
+}
+
+taikoDrum.addEventListener("pointerup", event => {
+  activeTaikoPointers.delete(event.pointerId);
+
+  const hit = getTaikoHitAt(event.clientX, event.clientY);
+  if (hit) {
+    const hitZone = taikoDrum.querySelector(`[data-hit="${hit.type}"][data-side="${hit.side}"]`);
+    strikeTaiko(hitZone.dataset.hit, hitZone.dataset.side, hitZone);
+  }
+
+  if (taikoDrum.hasPointerCapture && taikoDrum.hasPointerCapture(event.pointerId)) {
+    taikoDrum.releasePointerCapture(event.pointerId);
+  }
+  event.preventDefault();
+});
+
+function clearTaikoPointer(event) {
+  activeTaikoPointers.delete(event.pointerId);
+}
+
+taikoDrum.addEventListener("pointercancel", clearTaikoPointer);
+taikoDrum.addEventListener("lostpointercapture", clearTaikoPointer);
+
 document.querySelectorAll(".hit-zone").forEach(button => {
-  button.addEventListener("click", () => strikeTaiko(button.dataset.hit, button.dataset.side, button));
+  button.addEventListener("click", event => {
+    // Pointer interactions are judged on pointerup. detail === 0 preserves
+    // keyboard and assistive-technology button activation without double hits.
+    if (event.detail === 0) strikeTaiko(button.dataset.hit, button.dataset.side, button);
+    event.preventDefault();
+  });
 });
 
 document.addEventListener("keydown", event => {
