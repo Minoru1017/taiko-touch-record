@@ -21,8 +21,14 @@
     --green: #3FA266;
     --link: #87c3ff;
     --accent: #599CE7;
+    --drum-red: #e94d4f;
+    --drum-red-dark: #a92e35;
+    --drum-rim: #f0d6aa;
+    --drum-rim-shadow: #a87543;
+    --duration-fast: 120ms;
+    --ease-out: cubic-bezier(0, 0, 0.2, 1);
   }
-  * { box-sizing: border-box; margin: 0; }
+  * { box-sizing: border-box; margin: 0; touch-action: manipulation; }
   body {
     background: var(--bg);
     color: var(--text);
@@ -109,11 +115,176 @@
   #token-msg { font-size: 12.5px; margin-top: 10px; min-height: 1.2em; }
   #token-msg.ok { color: var(--green); }
   #token-msg.err { color: var(--red); }
+
+  /* ── 互動太鼓 ── */
+  .taiko-play {
+    margin: 22px -16px 4px;
+    padding: 22px 16px 20px;
+    overflow: hidden;
+    background:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+      #121212;
+    background-size: 24px 24px;
+    border-block: 1px solid var(--stroke);
+    text-align: center;
+  }
+  .taiko-kicker {
+    color: var(--text-3);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .taiko-title {
+    margin-top: 2px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .taiko-hint {
+    margin-top: 2px;
+    color: var(--text-2);
+    font-size: 12px;
+  }
+  .taiko-wrap {
+    position: relative;
+    width: min(78vw, 350px);
+    margin: 20px auto 0;
+    padding-bottom: 28px;
+  }
+  .taiko-drum {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    aspect-ratio: 1.65 / 1;
+    padding: clamp(16px, 4.2vw, 25px);
+    border-radius: 50%;
+    background: var(--drum-rim);
+    box-shadow:
+      inset 0 -11px 0 var(--drum-rim-shadow),
+      0 12px 26px rgba(0,0,0,0.42);
+  }
+  .taiko-drum::after {
+    content: "";
+    position: absolute;
+    inset: 11px 16px 22px;
+    pointer-events: none;
+    border: 2px dashed rgba(111,67,31,0.44);
+    border-radius: 50%;
+  }
+  .hit-zone {
+    position: absolute;
+    z-index: 2;
+    border: 0;
+    font: inherit;
+    color: transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(255,255,255,0.08);
+  }
+  .hit-zone:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 4px;
+  }
+  .hit-zone--don {
+    z-index: 3;
+    inset: clamp(38px, 10vw, 48px);
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 42% 32%, rgba(255,255,255,0.18), transparent 28%),
+      var(--drum-red);
+    box-shadow: inset 0 -7px 0 var(--drum-red-dark);
+    transition: transform var(--duration-fast) var(--ease-out), filter var(--duration-fast) var(--ease-out);
+  }
+  .hit-zone--ka {
+    top: 7%;
+    bottom: 13%;
+    width: 22%;
+    background: transparent;
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+  .hit-zone--ka.left { left: 0; border-radius: 100% 18% 18% 100%; }
+  .hit-zone--ka.right { right: 0; border-radius: 18% 100% 100% 18%; }
+  .hit-zone--don.hit {
+    transform: scale(0.965);
+    filter: brightness(1.2);
+  }
+  .hit-zone--ka.hit { background-color: rgba(255,255,255,0.2); }
+  .taiko-stand {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 58%;
+    height: 46px;
+    transform: translateX(-50%);
+    border: solid #5f3927;
+    border-width: 0 13px 10px;
+    clip-path: polygon(13% 0, 87% 0, 100% 100%, 0 100%);
+  }
+  .taiko-feedback {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    min-height: 35px;
+    margin-top: 2px;
+  }
+  #hit-word {
+    min-width: 3em;
+    color: var(--text-3);
+    font-size: 23px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    transition: color var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+  }
+  #hit-word.don { color: #ff7274; transform: scale(1.08); }
+  #hit-word.ka { color: #f5d59f; transform: scale(1.08); }
+  .key-guide {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    color: var(--text-3);
+    font-size: 11px;
+  }
+  .key-guide kbd {
+    min-width: 23px;
+    padding: 1px 5px;
+    border: 1px solid var(--stroke);
+    border-bottom-color: rgba(228,228,228,0.28);
+    border-radius: 4px;
+    background: var(--fill);
+    color: var(--text-2);
+    font: 10px ui-monospace, Consolas, monospace;
+  }
+  @media (min-width: 672px) {
+    .taiko-play { margin-inline: 0; border: 1px solid var(--stroke); border-radius: 14px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :root { --duration-fast: 0ms; }
+  }
 </style>
 </head>
 <body>
 <h1>太鼓の達人 手感紀錄表</h1>
 <p class="caption">資料來源:GitHub · Minoru1017/taiko-touch-record · TAIKO_FEEL_LOG.md</p>
+
+<section class="taiko-play" aria-labelledby="taiko-title">
+  <p class="taiko-kicker">Free play</p>
+  <h2 class="taiko-title" id="taiko-title">敲一下，找回手感</h2>
+  <p class="taiko-hint">紅色鼓面是「咚」，米色鼓邊是「卡」</p>
+  <div class="taiko-wrap">
+    <div class="taiko-stand" aria-hidden="true"></div>
+    <div class="taiko-drum">
+      <button class="hit-zone hit-zone--ka left" type="button" data-hit="ka" aria-label="敲左鼓邊，發出卡"></button>
+      <button class="hit-zone hit-zone--don" type="button" data-hit="don" aria-label="敲鼓面，發出咚"></button>
+      <button class="hit-zone hit-zone--ka right" type="button" data-hit="ka" aria-label="敲右鼓邊，發出卡"></button>
+    </div>
+  </div>
+  <div class="taiko-feedback" aria-hidden="true"><span id="hit-word">來吧</span></div>
+  <div class="key-guide" aria-label="鍵盤操作說明">
+    <span><kbd>F</kbd> <kbd>J</kbd> 咚</span>
+    <span><kbd>D</kbd> <kbd>K</kbd> 卡</span>
+  </div>
+</section>
 
 <div id="app"></div>
 
@@ -205,6 +376,116 @@ const FEEL_LEVELS = ["很有差距", "略差", "表現相當", "略好", "非常
 const FEEL_COLOR = { "很有差距": "var(--red)", "略差": "var(--orange)", "表現相當": "var(--gray)", "略好": "var(--blue)", "非常的好": "var(--green)" };
 const DIFFICULTIES = ["簡單", "普通", "困難", "鬼(表)", "鬼(裏)"];
 const COMFORTS = ["順手", "普通", "不順手"];
+
+// ── 互動太鼓:Web Audio 即時合成 ──────────────────────────────────
+
+let audioContext = null;
+let feedbackTimer = 0;
+
+function getAudioContext() {
+  if (!audioContext) {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return null;
+    audioContext = new AudioContext();
+  }
+  if (audioContext.state === "suspended") audioContext.resume();
+  return audioContext;
+}
+
+function noiseSource(ctx, duration) {
+  const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * duration), ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+  }
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  return source;
+}
+
+function playDon(ctx) {
+  const now = ctx.currentTime;
+  const body = ctx.createOscillator();
+  const bodyGain = ctx.createGain();
+  body.type = "sine";
+  body.frequency.setValueAtTime(128, now);
+  body.frequency.exponentialRampToValueAtTime(54, now + 0.22);
+  bodyGain.gain.setValueAtTime(0.9, now);
+  bodyGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+  body.connect(bodyGain).connect(ctx.destination);
+  body.start(now);
+  body.stop(now + 0.31);
+
+  const attack = noiseSource(ctx, 0.07);
+  const filter = ctx.createBiquadFilter();
+  const attackGain = ctx.createGain();
+  filter.type = "lowpass";
+  filter.frequency.value = 650;
+  attackGain.gain.setValueAtTime(0.18, now);
+  attackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+  attack.connect(filter).connect(attackGain).connect(ctx.destination);
+  attack.start(now);
+}
+
+function playKa(ctx) {
+  const now = ctx.currentTime;
+  const click = noiseSource(ctx, 0.09);
+  const band = ctx.createBiquadFilter();
+  const clickGain = ctx.createGain();
+  band.type = "bandpass";
+  band.frequency.value = 1250;
+  band.Q.value = 0.75;
+  clickGain.gain.setValueAtTime(0.72, now);
+  clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+  click.connect(band).connect(clickGain).connect(ctx.destination);
+  click.start(now);
+
+  [680, 1040].forEach((frequency, index) => {
+    const stick = ctx.createOscillator();
+    const stickGain = ctx.createGain();
+    stick.type = "triangle";
+    stick.frequency.value = frequency;
+    stickGain.gain.setValueAtTime(index ? 0.1 : 0.16, now);
+    stickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+    stick.connect(stickGain).connect(ctx.destination);
+    stick.start(now);
+    stick.stop(now + 0.07);
+  });
+}
+
+function strikeTaiko(type, sourceButton) {
+  const ctx = getAudioContext();
+  if (ctx) type === "don" ? playDon(ctx) : playKa(ctx);
+
+  const matchingButton = sourceButton || document.querySelector(`[data-hit="${type}"]`);
+  matchingButton.classList.remove("hit");
+  void matchingButton.offsetWidth;
+  matchingButton.classList.add("hit");
+  window.setTimeout(() => matchingButton.classList.remove("hit"), 120);
+
+  const word = document.getElementById("hit-word");
+  window.clearTimeout(feedbackTimer);
+  word.textContent = type === "don" ? "咚！" : "卡！";
+  word.className = type;
+  feedbackTimer = window.setTimeout(() => {
+    word.textContent = "再一下";
+    word.className = "";
+  }, 420);
+}
+
+document.querySelectorAll(".hit-zone").forEach(button => {
+  button.addEventListener("click", () => strikeTaiko(button.dataset.hit, button));
+});
+
+document.addEventListener("keydown", event => {
+  if (event.repeat || /^(INPUT|SELECT|TEXTAREA)$/.test(event.target.tagName)) return;
+  const keyMap = { f: "don", j: "don", d: "ka", k: "ka" };
+  const hit = keyMap[event.key.toLowerCase()];
+  if (hit) {
+    event.preventDefault();
+    strikeTaiko(hit);
+  }
+});
 
 // ── 檢視:解析與渲染 ─────────────────────────────────────────────
 
