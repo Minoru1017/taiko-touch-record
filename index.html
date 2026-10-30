@@ -149,29 +149,29 @@
   }
   .taiko-wrap {
     position: relative;
-    width: min(78vw, 350px);
+    width: min(76vw, 320px);
     margin: 20px auto 0;
-    padding-bottom: 28px;
   }
   .taiko-drum {
     position: relative;
     z-index: 1;
     width: 100%;
-    aspect-ratio: 1.65 / 1;
-    padding: clamp(16px, 4.2vw, 25px);
+    aspect-ratio: 1;
     border-radius: 50%;
     background: var(--drum-rim);
-    box-shadow:
-      inset 0 -11px 0 var(--drum-rim-shadow),
-      0 12px 26px rgba(0,0,0,0.42);
+    border: 2px solid #b9814d;
+    overflow: hidden;
   }
   .taiko-drum::after {
     content: "";
     position: absolute;
-    inset: 11px 16px 22px;
+    z-index: 4;
+    top: 3%;
+    bottom: 3%;
+    left: 50%;
+    width: 1px;
     pointer-events: none;
-    border: 2px dashed rgba(111,67,31,0.44);
-    border-radius: 50%;
+    background: rgba(50,31,20,0.22);
   }
   .hit-zone {
     position: absolute;
@@ -188,39 +188,28 @@
   }
   .hit-zone--don {
     z-index: 3;
-    inset: clamp(38px, 10vw, 48px);
-    border-radius: 50%;
-    background:
-      radial-gradient(circle at 42% 32%, rgba(255,255,255,0.18), transparent 28%),
-      var(--drum-red);
-    box-shadow: inset 0 -7px 0 var(--drum-red-dark);
-    transition: transform var(--duration-fast) var(--ease-out), filter var(--duration-fast) var(--ease-out);
+    top: 14%;
+    bottom: 14%;
+    width: 36%;
+    background: var(--drum-red);
+    transition: background-color var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
   }
+  .hit-zone--don.left { left: 14%; border-radius: 999px 0 0 999px; transform-origin: right center; }
+  .hit-zone--don.right { right: 14%; border-radius: 0 999px 999px 0; transform-origin: left center; }
   .hit-zone--ka {
-    top: 7%;
-    bottom: 13%;
-    width: 22%;
+    top: 0;
+    bottom: 0;
+    width: 50%;
     background: transparent;
     transition: background-color var(--duration-fast) var(--ease-out);
   }
-  .hit-zone--ka.left { left: 0; border-radius: 100% 18% 18% 100%; }
-  .hit-zone--ka.right { right: 0; border-radius: 18% 100% 100% 18%; }
+  .hit-zone--ka.left { left: 0; }
+  .hit-zone--ka.right { right: 0; }
   .hit-zone--don.hit {
-    transform: scale(0.965);
-    filter: brightness(1.2);
+    transform: scale(0.97);
+    background: #ff686a;
   }
-  .hit-zone--ka.hit { background-color: rgba(255,255,255,0.2); }
-  .taiko-stand {
-    position: absolute;
-    left: 50%;
-    bottom: 0;
-    width: 58%;
-    height: 46px;
-    transform: translateX(-50%);
-    border: solid #5f3927;
-    border-width: 0 13px 10px;
-    clip-path: polygon(13% 0, 87% 0, 100% 100%, 0 100%);
-  }
+  .hit-zone--ka.hit { background-color: rgba(255,255,255,0.3); }
   .taiko-feedback {
     display: flex;
     align-items: baseline;
@@ -238,6 +227,13 @@
   }
   #hit-word.don { color: #ff7274; transform: scale(1.08); }
   #hit-word.ka { color: #f5d59f; transform: scale(1.08); }
+  .audio-status {
+    min-height: 18px;
+    margin-top: 7px;
+    color: var(--text-3);
+    font-size: 11px;
+  }
+  .audio-status.error { color: var(--red); }
   .key-guide {
     display: flex;
     justify-content: center;
@@ -270,20 +266,23 @@
 <section class="taiko-play" aria-labelledby="taiko-title">
   <p class="taiko-kicker">Free play</p>
   <h2 class="taiko-title" id="taiko-title">敲一下，找回手感</h2>
-  <p class="taiko-hint">紅色鼓面是「咚」，米色鼓邊是「卡」</p>
+  <p class="taiko-hint">紅色左右鼓面是「咚」，米色左右鼓邊是「卡」</p>
   <div class="taiko-wrap">
-    <div class="taiko-stand" aria-hidden="true"></div>
     <div class="taiko-drum">
-      <button class="hit-zone hit-zone--ka left" type="button" data-hit="ka" aria-label="敲左鼓邊，發出卡"></button>
-      <button class="hit-zone hit-zone--don" type="button" data-hit="don" aria-label="敲鼓面，發出咚"></button>
-      <button class="hit-zone hit-zone--ka right" type="button" data-hit="ka" aria-label="敲右鼓邊，發出卡"></button>
+      <button class="hit-zone hit-zone--ka left" type="button" data-hit="ka" data-side="left" aria-label="敲左鼓邊，發出卡"></button>
+      <button class="hit-zone hit-zone--ka right" type="button" data-hit="ka" data-side="right" aria-label="敲右鼓邊，發出卡"></button>
+      <button class="hit-zone hit-zone--don left" type="button" data-hit="don" data-side="left" aria-label="敲左鼓面，發出咚"></button>
+      <button class="hit-zone hit-zone--don right" type="button" data-hit="don" data-side="right" aria-label="敲右鼓面，發出咚"></button>
     </div>
   </div>
   <div class="taiko-feedback" aria-hidden="true"><span id="hit-word">來吧</span></div>
   <div class="key-guide" aria-label="鍵盤操作說明">
-    <span><kbd>F</kbd> <kbd>J</kbd> 咚</span>
-    <span><kbd>D</kbd> <kbd>K</kbd> 卡</span>
+    <span><kbd>D</kbd> 左卡</span>
+    <span><kbd>F</kbd> 左咚</span>
+    <span><kbd>J</kbd> 右咚</span>
+    <span><kbd>K</kbd> 右卡</span>
   </div>
+  <p class="audio-status" id="audio-status" role="status">第一次敲擊會啟用聲音</p>
 </section>
 
 <div id="app"></div>
@@ -380,15 +379,32 @@ const COMFORTS = ["順手", "普通", "不順手"];
 // ── 互動太鼓:Web Audio 即時合成 ──────────────────────────────────
 
 let audioContext = null;
+let audioOutput = null;
 let feedbackTimer = 0;
 
-function getAudioContext() {
+async function getAudioContext() {
   if (!audioContext) {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return null;
-    audioContext = new AudioContext();
+    audioContext = new AudioContext({ latencyHint: "interactive" });
+
+    const unlock = audioContext.createBufferSource();
+    unlock.buffer = audioContext.createBuffer(1, 1, audioContext.sampleRate);
+    unlock.connect(audioContext.destination);
+    unlock.start(0);
+
+    const compressor = audioContext.createDynamicsCompressor();
+    const masterGain = audioContext.createGain();
+    compressor.threshold.value = -10;
+    compressor.knee.value = 12;
+    compressor.ratio.value = 8;
+    compressor.attack.value = 0.003;
+    compressor.release.value = 0.15;
+    masterGain.gain.value = 0.95;
+    compressor.connect(masterGain).connect(audioContext.destination);
+    audioOutput = compressor;
   }
-  if (audioContext.state === "suspended") audioContext.resume();
+  if (audioContext.state !== "running") await audioContext.resume();
   return audioContext;
 }
 
@@ -405,25 +421,30 @@ function noiseSource(ctx, duration) {
 
 function playDon(ctx) {
   const now = ctx.currentTime;
-  const body = ctx.createOscillator();
-  const bodyGain = ctx.createGain();
-  body.type = "sine";
-  body.frequency.setValueAtTime(128, now);
-  body.frequency.exponentialRampToValueAtTime(54, now + 0.22);
-  bodyGain.gain.setValueAtTime(0.9, now);
-  bodyGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-  body.connect(bodyGain).connect(ctx.destination);
-  body.start(now);
-  body.stop(now + 0.31);
+  [
+    { type: "sine", start: 175, end: 82, gain: 0.85, duration: 0.3 },
+    { type: "triangle", start: 270, end: 118, gain: 0.28, duration: 0.18 },
+  ].forEach(tone => {
+    const body = ctx.createOscillator();
+    const bodyGain = ctx.createGain();
+    body.type = tone.type;
+    body.frequency.setValueAtTime(tone.start, now);
+    body.frequency.exponentialRampToValueAtTime(tone.end, now + tone.duration);
+    bodyGain.gain.setValueAtTime(tone.gain, now);
+    bodyGain.gain.exponentialRampToValueAtTime(0.001, now + tone.duration);
+    body.connect(bodyGain).connect(audioOutput);
+    body.start(now);
+    body.stop(now + tone.duration + 0.01);
+  });
 
-  const attack = noiseSource(ctx, 0.07);
+  const attack = noiseSource(ctx, 0.08);
   const filter = ctx.createBiquadFilter();
   const attackGain = ctx.createGain();
   filter.type = "lowpass";
-  filter.frequency.value = 650;
-  attackGain.gain.setValueAtTime(0.18, now);
-  attackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
-  attack.connect(filter).connect(attackGain).connect(ctx.destination);
+  filter.frequency.value = 1100;
+  attackGain.gain.setValueAtTime(0.24, now);
+  attackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+  attack.connect(filter).connect(attackGain).connect(audioOutput);
   attack.start(now);
 }
 
@@ -433,31 +454,45 @@ function playKa(ctx) {
   const band = ctx.createBiquadFilter();
   const clickGain = ctx.createGain();
   band.type = "bandpass";
-  band.frequency.value = 1250;
-  band.Q.value = 0.75;
-  clickGain.gain.setValueAtTime(0.72, now);
+  band.frequency.value = 1800;
+  band.Q.value = 0.9;
+  clickGain.gain.setValueAtTime(0.82, now);
   clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
-  click.connect(band).connect(clickGain).connect(ctx.destination);
+  click.connect(band).connect(clickGain).connect(audioOutput);
   click.start(now);
 
-  [680, 1040].forEach((frequency, index) => {
+  [850, 1350].forEach((frequency, index) => {
     const stick = ctx.createOscillator();
     const stickGain = ctx.createGain();
     stick.type = "triangle";
     stick.frequency.value = frequency;
-    stickGain.gain.setValueAtTime(index ? 0.1 : 0.16, now);
+    stickGain.gain.setValueAtTime(index ? 0.12 : 0.2, now);
     stickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
-    stick.connect(stickGain).connect(ctx.destination);
+    stick.connect(stickGain).connect(audioOutput);
     stick.start(now);
     stick.stop(now + 0.07);
   });
 }
 
-function strikeTaiko(type, sourceButton) {
-  const ctx = getAudioContext();
-  if (ctx) type === "don" ? playDon(ctx) : playKa(ctx);
+async function playTaikoSound(type) {
+  const status = document.getElementById("audio-status");
+  try {
+    const ctx = await getAudioContext();
+    if (!ctx || ctx.state !== "running") throw new Error("AudioContext is unavailable");
+    type === "don" ? playDon(ctx) : playKa(ctx);
+    status.textContent = "聲音已開啟";
+    status.className = "audio-status";
+  } catch (error) {
+    console.error("Taiko audio failed:", error);
+    status.textContent = "無法播放聲音，請確認瀏覽器未靜音後再敲一次";
+    status.className = "audio-status error";
+  }
+}
 
-  const matchingButton = sourceButton || document.querySelector(`[data-hit="${type}"]`);
+function strikeTaiko(type, side, sourceButton) {
+  void playTaikoSound(type);
+
+  const matchingButton = sourceButton || document.querySelector(`[data-hit="${type}"][data-side="${side}"]`);
   matchingButton.classList.remove("hit");
   void matchingButton.offsetWidth;
   matchingButton.classList.add("hit");
@@ -465,7 +500,7 @@ function strikeTaiko(type, sourceButton) {
 
   const word = document.getElementById("hit-word");
   window.clearTimeout(feedbackTimer);
-  word.textContent = type === "don" ? "咚！" : "卡！";
+  word.textContent = `${side === "left" ? "左" : "右"}${type === "don" ? "咚" : "卡"}！`;
   word.className = type;
   feedbackTimer = window.setTimeout(() => {
     word.textContent = "再一下";
@@ -474,16 +509,21 @@ function strikeTaiko(type, sourceButton) {
 }
 
 document.querySelectorAll(".hit-zone").forEach(button => {
-  button.addEventListener("click", () => strikeTaiko(button.dataset.hit, button));
+  button.addEventListener("click", () => strikeTaiko(button.dataset.hit, button.dataset.side, button));
 });
 
 document.addEventListener("keydown", event => {
   if (event.repeat || /^(INPUT|SELECT|TEXTAREA)$/.test(event.target.tagName)) return;
-  const keyMap = { f: "don", j: "don", d: "ka", k: "ka" };
-  const hit = keyMap[event.key.toLowerCase()];
-  if (hit) {
+  const keyMap = {
+    d: { type: "ka", side: "left" },
+    f: { type: "don", side: "left" },
+    j: { type: "don", side: "right" },
+    k: { type: "ka", side: "right" },
+  };
+  const strike = keyMap[event.key.toLowerCase()];
+  if (strike) {
     event.preventDefault();
-    strikeTaiko(hit);
+    strikeTaiko(strike.type, strike.side);
   }
 });
 
