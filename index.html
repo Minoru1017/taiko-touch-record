@@ -191,14 +191,14 @@
   }
   .hit-zone--don {
     z-index: 3;
-    top: 14%;
-    bottom: 14%;
-    width: 36%;
+    top: 18%;
+    bottom: 18%;
+    width: 32%;
     background: var(--drum-red);
     transition: background-color var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
   }
-  .hit-zone--don.left { left: 14%; border-radius: 999px 0 0 999px; transform-origin: right center; }
-  .hit-zone--don.right { right: 14%; border-radius: 0 999px 999px 0; transform-origin: left center; }
+  .hit-zone--don.left { left: 18%; border-radius: 999px 0 0 999px; transform-origin: right center; }
+  .hit-zone--don.right { right: 18%; border-radius: 0 999px 999px 0; transform-origin: left center; }
   .hit-zone--ka {
     top: 0;
     bottom: 0;
@@ -620,7 +620,7 @@ function getTaikoHitAt(clientX, clientY) {
   if (distance > radius) return null;
 
   return {
-    type: distance <= rect.width * 0.36 ? "don" : "ka",
+    type: distance <= rect.width * 0.32 ? "don" : "ka",
     side: dx < 0 ? "left" : "right",
   };
 }
