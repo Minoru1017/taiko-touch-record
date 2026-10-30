@@ -234,6 +234,88 @@
     font-size: 11px;
   }
   .audio-status.error { color: var(--red); }
+  .mobile-lock-controls {
+    display: none;
+    justify-content: center;
+    margin-top: 12px;
+  }
+  .mobile-lock-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 42px;
+    padding: 8px 14px;
+    border: 1px solid var(--stroke);
+    border-radius: 8px;
+    background: var(--fill);
+    color: var(--text);
+    font: 600 12px inherit;
+    cursor: pointer;
+  }
+  .mobile-lock-button svg { width: 15px; height: 15px; }
+  .mobile-lock-button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+  .mobile-lock-note {
+    display: none;
+    margin-top: 5px;
+    color: var(--text-3);
+    font-size: 10px;
+  }
+  .mobile-device .mobile-lock-controls { display: flex; }
+  .mobile-device .mobile-lock-note { display: block; }
+  .lock-exit { display: none; }
+  body.taiko-screen-locked {
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  .taiko-play.is-locked {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100dvh;
+    margin: 0;
+    padding:
+      max(18px, env(safe-area-inset-top))
+      max(16px, env(safe-area-inset-right))
+      max(16px, env(safe-area-inset-bottom))
+      max(16px, env(safe-area-inset-left));
+    border: 0;
+    border-radius: 0;
+    overscroll-behavior: none;
+    touch-action: none;
+  }
+  .taiko-play.is-locked .taiko-kicker,
+  .taiko-play.is-locked .taiko-hint,
+  .taiko-play.is-locked .key-guide,
+  .taiko-play.is-locked .mobile-lock-note,
+  .taiko-play.is-locked .lock-enter { display: none; }
+  .taiko-play.is-locked .taiko-title { margin: 0; font-size: 15px; }
+  .taiko-play.is-locked .taiko-wrap {
+    width: min(88vw, 70dvh, 440px);
+    margin-top: 12px;
+  }
+  .taiko-play.is-locked .taiko-feedback { margin-top: 8px; }
+  .taiko-play.is-locked .audio-status { margin-top: 2px; }
+  .taiko-play.is-locked .mobile-lock-controls {
+    position: absolute;
+    top: max(12px, env(safe-area-inset-top));
+    right: max(12px, env(safe-area-inset-right));
+    display: flex;
+    margin: 0;
+  }
+  .taiko-play.is-locked .lock-exit {
+    display: inline-flex;
+    min-width: 64px;
+    background: rgba(18,18,18,0.82);
+  }
   .key-guide {
     display: flex;
     justify-content: center;
@@ -283,6 +365,14 @@
     <span><kbd>K</kbd> 右卡</span>
   </div>
   <p class="audio-status" id="audio-status" role="status">第一次敲擊會啟用聲音</p>
+  <div class="mobile-lock-controls" id="mobile-lock-controls" hidden>
+    <button class="mobile-lock-button lock-enter" id="enter-taiko-lock" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      鎖定打擊畫面
+    </button>
+    <button class="mobile-lock-button lock-exit" id="exit-taiko-lock" type="button">結束</button>
+  </div>
+  <p class="mobile-lock-note" id="mobile-lock-note" hidden>固定打擊區並避免頁面滑動</p>
 </section>
 
 <div id="app"></div>
@@ -526,6 +616,91 @@ document.addEventListener("keydown", event => {
     strikeTaiko(strike.type, strike.side);
   }
 });
+
+// ── iOS / Android 鎖定打擊畫面 ───────────────────────────────────
+
+const taikoPlay = document.querySelector(".taiko-play");
+const lockControls = document.getElementById("mobile-lock-controls");
+const lockNote = document.getElementById("mobile-lock-note");
+const enterLockButton = document.getElementById("enter-taiko-lock");
+const exitLockButton = document.getElementById("exit-taiko-lock");
+const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isAndroidDevice = /Android/i.test(navigator.userAgent);
+let taikoLockActive = false;
+let taikoOwnsFullscreen = false;
+let taikoWakeLock = null;
+
+async function requestTaikoWakeLock() {
+  if (!taikoLockActive || document.visibilityState !== "visible" || !("wakeLock" in navigator)) return;
+  try {
+    taikoWakeLock = await navigator.wakeLock.request("screen");
+    taikoWakeLock.addEventListener("release", () => { taikoWakeLock = null; }, { once: true });
+  } catch (error) {
+    console.info("Screen Wake Lock is unavailable:", error);
+  }
+}
+
+async function enterTaikoLock() {
+  if (taikoLockActive) return;
+  taikoLockActive = true;
+  document.body.classList.add("taiko-screen-locked");
+  taikoPlay.classList.add("is-locked");
+  enterLockButton.setAttribute("aria-pressed", "true");
+  exitLockButton.focus({ preventScroll: true });
+  void requestTaikoWakeLock();
+
+  if (isAndroidDevice && taikoPlay.requestFullscreen) {
+    try {
+      await taikoPlay.requestFullscreen({ navigationUI: "hide" });
+      taikoOwnsFullscreen = true;
+      if (screen.orientation && screen.orientation.lock) {
+        const orientation = screen.orientation.type.startsWith("landscape") ? "landscape" : "portrait";
+        await screen.orientation.lock(orientation);
+      }
+    } catch (error) {
+      console.info("Fullscreen or orientation lock is unavailable:", error);
+    }
+  }
+}
+
+async function exitTaikoLock({ skipFullscreenExit = false } = {}) {
+  if (!taikoLockActive) return;
+  taikoLockActive = false;
+  taikoOwnsFullscreen = false;
+  document.body.classList.remove("taiko-screen-locked");
+  taikoPlay.classList.remove("is-locked");
+  enterLockButton.setAttribute("aria-pressed", "false");
+
+  if (taikoWakeLock) {
+    await taikoWakeLock.release().catch(() => {});
+    taikoWakeLock = null;
+  }
+  if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+  if (!skipFullscreenExit && document.fullscreenElement && document.exitFullscreen) {
+    await document.exitFullscreen().catch(() => {});
+  }
+  enterLockButton.focus({ preventScroll: true });
+}
+
+if (isIOSDevice || isAndroidDevice) {
+  document.body.classList.add("mobile-device");
+  lockControls.hidden = false;
+  lockNote.hidden = false;
+  enterLockButton.addEventListener("click", enterTaikoLock);
+  exitLockButton.addEventListener("click", () => { void exitTaikoLock(); });
+
+  document.addEventListener("fullscreenchange", () => {
+    if (taikoLockActive && taikoOwnsFullscreen && !document.fullscreenElement) {
+      void exitTaikoLock({ skipFullscreenExit: true });
+    }
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (taikoLockActive && document.visibilityState === "visible" && !taikoWakeLock) {
+      void requestTaikoWakeLock();
+    }
+  });
+}
 
 // ── 檢視:解析與渲染 ─────────────────────────────────────────────
 
