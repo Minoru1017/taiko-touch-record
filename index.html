@@ -148,9 +148,18 @@
     font-size: 12px;
   }
   .taiko-wrap {
+    --ka-overreach: clamp(16px, 4vw, 28px);
     position: relative;
-    width: min(76vw, 320px);
+    width: min(86vw, 380px);
     margin: 20px auto 0;
+    touch-action: none;
+  }
+  .taiko-hit-field {
+    position: absolute;
+    z-index: 0;
+    inset: calc(0px - var(--ka-overreach));
+    border-radius: 50%;
+    touch-action: none;
   }
   .taiko-drum {
     position: relative;
@@ -302,7 +311,7 @@
   .taiko-play.is-locked .lock-enter { display: none; }
   .taiko-play.is-locked .taiko-title { margin: 0; font-size: 15px; }
   .taiko-play.is-locked .taiko-wrap {
-    width: min(88vw, 70dvh, 440px);
+    width: min(90vw, 78dvh, 520px);
     margin-top: 12px;
   }
   .taiko-play.is-locked .taiko-feedback { margin-top: 8px; }
@@ -351,8 +360,9 @@
 <section class="taiko-play" aria-labelledby="taiko-title">
   <p class="taiko-kicker">Free play</p>
   <h2 class="taiko-title" id="taiko-title">敲一下，找回手感</h2>
-  <p class="taiko-hint">紅色左右鼓面是「咚」，米色左右鼓邊是「卡」・可按住滑動，鬆手判定</p>
+  <p class="taiko-hint">紅色左右鼓面是「咚」・米色鼓邊與鼓外一圈都可判定「卡」</p>
   <div class="taiko-wrap">
+    <div class="taiko-hit-field" aria-hidden="true"></div>
     <div class="taiko-drum">
       <button class="hit-zone hit-zone--ka left" type="button" data-hit="ka" data-side="left" aria-label="敲左鼓邊，發出卡"></button>
       <button class="hit-zone hit-zone--ka right" type="button" data-hit="ka" data-side="right" aria-label="敲右鼓邊，發出卡"></button>
@@ -601,31 +611,34 @@ function strikeTaiko(type, side, sourceButton) {
   }, 420);
 }
 
+const taikoWrap = document.querySelector(".taiko-wrap");
 const taikoDrum = document.querySelector(".taiko-drum");
+const taikoHitField = document.querySelector(".taiko-hit-field");
 const activeTaikoPointers = new Set();
 
-taikoDrum.addEventListener("pointerdown", event => {
+taikoWrap.addEventListener("pointerdown", event => {
   if (event.pointerType === "mouse" && event.button !== 0) return;
   activeTaikoPointers.add(event.pointerId);
-  if (taikoDrum.setPointerCapture) taikoDrum.setPointerCapture(event.pointerId);
+  if (taikoWrap.setPointerCapture) taikoWrap.setPointerCapture(event.pointerId);
   event.preventDefault();
 });
 
 function getTaikoHitAt(clientX, clientY) {
-  const rect = taikoDrum.getBoundingClientRect();
-  const radius = rect.width / 2;
-  const dx = clientX - (rect.left + radius);
-  const dy = clientY - (rect.top + rect.height / 2);
+  const drumRect = taikoDrum.getBoundingClientRect();
+  const fieldRect = taikoHitField.getBoundingClientRect();
+  const radius = drumRect.width / 2;
+  const dx = clientX - (drumRect.left + radius);
+  const dy = clientY - (drumRect.top + drumRect.height / 2);
   const distance = Math.hypot(dx, dy);
-  if (distance > radius) return null;
+  if (distance > fieldRect.width / 2) return null;
 
   return {
-    type: distance <= rect.width * 0.32 ? "don" : "ka",
+    type: distance <= drumRect.width * 0.32 ? "don" : "ka",
     side: dx < 0 ? "left" : "right",
   };
 }
 
-taikoDrum.addEventListener("pointerup", event => {
+taikoWrap.addEventListener("pointerup", event => {
   activeTaikoPointers.delete(event.pointerId);
 
   const hit = getTaikoHitAt(event.clientX, event.clientY);
@@ -634,8 +647,8 @@ taikoDrum.addEventListener("pointerup", event => {
     strikeTaiko(hitZone.dataset.hit, hitZone.dataset.side, hitZone);
   }
 
-  if (taikoDrum.hasPointerCapture && taikoDrum.hasPointerCapture(event.pointerId)) {
-    taikoDrum.releasePointerCapture(event.pointerId);
+  if (taikoWrap.hasPointerCapture && taikoWrap.hasPointerCapture(event.pointerId)) {
+    taikoWrap.releasePointerCapture(event.pointerId);
   }
   event.preventDefault();
 });
@@ -644,8 +657,8 @@ function clearTaikoPointer(event) {
   activeTaikoPointers.delete(event.pointerId);
 }
 
-taikoDrum.addEventListener("pointercancel", clearTaikoPointer);
-taikoDrum.addEventListener("lostpointercapture", clearTaikoPointer);
+taikoWrap.addEventListener("pointercancel", clearTaikoPointer);
+taikoWrap.addEventListener("lostpointercapture", clearTaikoPointer);
 
 document.querySelectorAll(".hit-zone").forEach(button => {
   button.addEventListener("click", event => {
